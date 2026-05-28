@@ -1,21 +1,30 @@
 package config
 
-type Config struct {
-	App    AppConfig    `mapstructure:"app"`
+type AppConfig struct {
+	Log    Log          `mapstructure:"log" validate:"required"`
+	App    App          `mapstructure:"app" validate:"required"`
+	Server Server       `mapstructure:"server" validate:"required"`
 	DB     DBConfig     `mapstructure:"db"`
 	JWT    JWTConfig    `mapstructure:"jwt"`
 	Secret SecretConfig `mapstructure:"-"`
 }
 
-type AppConfig struct {
-	Name string `mapstructure:"name"`
-	Port string `mapstructure:"port"`
+type Log struct {
+	Level string `mapstructure:"level" validate:"required"`
+	Env   string `mapstructure:"env" validate:"required"`
+}
+
+type App struct {
+	Name      string `mapstructure:"name" validate:"required"`
+	ProjectID string `mapstructure:"project-id" validate:"required"`
+}
+
+type Server struct {
+	Address  string `mapstructure:"address" validate:"required"`
+	TimeZone string `mapstructure:"time-zone" validate:"required"`
 }
 
 type DBConfig struct {
-	Host string `mapstructure:"host"`
-	Port string `mapstructure:"port"`
-	User string `mapstructure:"user"`
 	Name string `mapstructure:"name"`
 }
 

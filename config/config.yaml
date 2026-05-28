@@ -1,6 +1,15 @@
+log:
+  level: "debug"
+  env: "local"
+
 app:
-  name: auth-service
-  port: 8080
+  name: "core"
+  project-id: "dev"
+
+server:
+  address: ":4001"
+  time-zone: "Asia/Bangkok"
+
 
 db:
   name: xxx

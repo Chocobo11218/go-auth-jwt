@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func LoadConfig() *config.Config {
+func LoadConfig() *config.AppConfig {
 	LoadEnvFile()
 
 	viper.SetConfigName("config")
@@ -21,7 +21,7 @@ func LoadConfig() *config.Config {
 		log.Fatalf("cannot read config: %v", err)
 	}
 
-	var cfg config.Config
+	var cfg config.AppConfig
 
 	if err := viper.Unmarshal(&cfg); err != nil {
 		log.Fatalf("cannot unmarshal config: %v", err)
