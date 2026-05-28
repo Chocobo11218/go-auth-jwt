@@ -1,0 +1,9 @@
+app:
+  name: auth-service
+  port: 8080
+
+db:
+  name: xxx
+
+jwt:
+  expire: 24h
