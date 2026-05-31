@@ -7,21 +7,21 @@ type User struct {
 	Id           string     `gorm:"column:id"`
 	Email        string     `gorm:"column:email"`
 	PasswordHash string     `gorm:"column:password_hash"`
-	PasswordSalt string     `gorm:"column:password_hash"`
-	FirstName    string     `gorm:"column:password_hash"`
-	LastName     string     `gorm:"column:password_hash"`
-	PhoneNumber  int64      `gorm:"column:password_hash"`
-	CreatedAt    time.Time  `gorm:"column:password_hash"`
-	UpdatedAt    time.Time  `gorm:"column:password_hash"`
-	DeletedAt    *time.Time `gorm:"column:password_hash"`
+	PasswordSalt string     `gorm:"column:password_salt"`
+	FirstName    string     `gorm:"column:first_name"`
+	LastName     string     `gorm:"column:last_name"`
+	PhoneNumber  int64      `gorm:"column:phone_number"`
+	CreatedAt    time.Time  `gorm:"column:created_at"`
+	UpdatedAt    time.Time  `gorm:"column:updated_at"`
+	DeletedAt    *time.Time `gorm:"column:deleted_at"`
 }
 
 // request
 type RegisterRequest struct {
 	Email       string `json:"email" validate:"required,email"`
 	Password    string `json:"password" validate:"required,min=8"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
+	FirstName   string `json:"first_name" validate:"required"`
+	LastName    string `json:"last_name" validate:"required"`
 	PhoneNumber string `json:"phone_number" validate:"required,numeric"`
 }
 
@@ -43,18 +43,16 @@ type TokenData struct {
 
 // error
 const (
-	EmailAlreadyExistMessage = "Email already exist"
-	ServiceUnavailableMessage = "Service is available between 06:00 and 23:00"
-
-	StatusSuccess = 1000
-	StatusEmailAlreadyExist = 4001
-	StatusInvalidCredential = 4002
-	StatusGenericError = 5000
+	// code
+	StatusSuccess            = 1000
+	StatusEmailAlreadyExist  = 4001
+	StatusInvalidCredential  = 4002
+	StatusGenericError       = 5000
 	StatusServiceUnavailable = 5001
-	StatusBadRequest = 400
-)
+	StatusBadRequest         = 400
 
-type AppError struct {
-	Code int
-	Message string
-}
+	// message
+	ServiceUnavailableMessage = "Service is available between 06:00 and 23:00"
+	EmailAlreadyExistMessage  = "Email already exist"
+	InvalidCredentialMessage  = "Invalid email or password"
+)
