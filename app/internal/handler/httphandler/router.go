@@ -42,8 +42,9 @@ func (s *HttpServer) InitRoutes() {
 
 	v1 := api.Group("/v1")
 	_ = v1
-	
+
 	v1.POST("/register", s.authHandler.Register)
+	v1.POST("/login", s.authHandler.Login)
 }
 
 func (s *HttpServer) Start(address string) error {

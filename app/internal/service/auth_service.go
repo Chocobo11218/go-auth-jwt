@@ -12,7 +12,7 @@ import (
 
 type AuthService interface {
 	Register(ctx context.Context, req *model.RegisterRequest) (model.AppResponse, error)
-	Login(ctx context.Context, req *model.LoginRequest) (model.TokenData, error)
+	Login(ctx context.Context, req *model.LoginRequest) (model.AppResponse, error)
 }
 
 type authService struct {
