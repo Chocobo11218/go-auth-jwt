@@ -10,6 +10,8 @@ import (
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/config"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/handler/httphandler"
+	//"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
+	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/configurer"
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/logger"
 	"github.com/go-playground/validator/v10"
@@ -43,20 +45,21 @@ func main() {
 	}
 
 	// init repository
-	// coreLayerRepository := repository.NewCoreLayerRepository(conf)
+	//userRepo := repository.NewUserRepository(db)
 
 	// init service
-	// serviceRepository := service.NewSaleSummaryDailyReportService(coreLayerRepository, conf)
+	//authService := service.NewAuthService(userRepo)
+	authService := service.NewAuthServiceMock()
 
 	// init handler
-	// saleSummaryReportHandler := httphandler.NewHandler(validator.New(), serviceRepository)
+	authHandler := httphandler.NewAuthHandler(authService)
 
 	// init http server
 	httpServer := httphandler.NewHttpServer(
 		conf,
 		echo.New(),
 		httphandler.NewHealthCheckHandler(),
-		// saleSummaryReportHandler,
+		authHandler,
 	)
 
 	go func() {
