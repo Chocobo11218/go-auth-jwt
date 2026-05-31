@@ -9,20 +9,20 @@ type HttpServer struct {
 	config             *config.AppConfig
 	server             *echo.Echo
 	healthCheckHandler IHealthCheckHandler
-	// SaleSummaryReportHandler Handler
+	authHandler AuthHandler
 }
 
 func NewHttpServer(
 	config *config.AppConfig,
 	server *echo.Echo,
 	healthHealthCheckHandler IHealthCheckHandler,
-	// saleSummaryReportHandler Handler,
+	authHandler AuthHandler,
 ) *HttpServer {
 	httpServer := &HttpServer{
 		config:             config,
 		server:             server,
 		healthCheckHandler: healthHealthCheckHandler,
-		// SaleSummaryReportHandler: saleSummaryReportHandler,
+		authHandler:        authHandler,
 	}
 
 	httpServer.InitRoutes()
@@ -42,7 +42,8 @@ func (s *HttpServer) InitRoutes() {
 
 	v1 := api.Group("/v1")
 	_ = v1
-	// v1.POST("/list", s.SaleSummaryReportHandler.GetReportList)
+	
+	v1.POST("/register", s.authHandler.Register)
 }
 
 func (s *HttpServer) Start(address string) error {
@@ -52,3 +53,5 @@ func (s *HttpServer) Start(address string) error {
 func (s *HttpServer) Server() *echo.Echo {
 	return s.server
 }
+
+
