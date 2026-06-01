@@ -4,7 +4,7 @@ import "time"
 
 // db entity
 type User struct {
-	Id           string     `gorm:"column:id"`
+	Id           uint64     `gorm:"column:id;primaryKey;autoIncrement"`
 	Email        string     `gorm:"column:email"`
 	PasswordHash string     `gorm:"column:password_hash"`
 	PasswordSalt string     `gorm:"column:password_salt"`
@@ -55,5 +55,5 @@ const (
 	ServiceUnavailableMessage = "Service is available between 06:00 and 23:00"
 	EmailAlreadyExistMessage  = "Email already exist"
 	InvalidCredentialMessage  = "Invalid email or password"
-	GenericErrorMessage = "Generic error"
+	GenericErrorMessage       = "Generic error"
 )

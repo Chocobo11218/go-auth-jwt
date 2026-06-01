@@ -6,13 +6,13 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/model"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -51,7 +51,7 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 	now := time.Now()
 
 	if err := s.checkServiceHours(); err != nil {
-		return model.AppResponse{}, err
+		return model.AppResponse{}, errors.New(model.ServiceUnavailableMessage) //err
 	}
 
 	exists, err := s.userRepo.ExistByEmail(ctx, req.Email)
@@ -77,10 +77,7 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
 	}
 
-	id := uuid.NewString()
-
 	saveUserDB := &model.User{
-		Id:           id,
 		Email:        req.Email,
 		PasswordHash: hash,
 		PasswordSalt: salt,
@@ -104,8 +101,37 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 	return registerResponse, nil
 }
 
+// Login gives a registered user an access token if the credentials are valid
 func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (model.AppResponse, error) {
-	return model.AppResponse{}, nil
+
+	if err := s.checkServiceHours(); err != nil {
+		return model.AppResponse{}, errors.New(model.ServiceUnavailableMessage)
+	}
+
+	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return model.AppResponse{}, errors.New(model.InvalidCredentialMessage)
+	}
+
+	err = verifyPassword(req.Password, user.PasswordSalt, user.PasswordHash)
+	if err != nil {
+		return model.AppResponse{}, errors.New(model.InvalidCredentialMessage)
+	}
+
+	token, err := s.generateJWT(user)
+	if err != nil {
+		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+	}
+
+	// store session
+	// _ = s.storeSession(ctx, user)
+
+	response := model.AppResponse{
+		Code:    model.StatusSuccess,
+		Message: "Success",
+		Data:    model.TokenData{AccessToken: token},
+	}
+	return response, nil
 }
 
 // register
@@ -144,11 +170,11 @@ func verifyPassword(password, salt, hash string) error {
 
 type jwtClaims struct {
 	jwt.RegisteredClaims
-	UserID string `json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	Email  string `json:"email"`
 }
 
-func (s *authService) generateJWT(user model.User) (string, error) {
+func (s *authService) generateJWT(user *model.User) (string, error) {
 	// prepare custome claims
 	claims := &jwtClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -169,7 +195,7 @@ func (s *authService) generateJWT(user model.User) (string, error) {
 
 // store session
 type sessionPayload struct {
-	UserID string `json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	Email  string `json:"email"`
 }
 
@@ -182,7 +208,7 @@ func (s *authService) storeSession(ctx context.Context, user *model.User) error 
 	if err != nil {
 		return err
 	}
-	return s.redisRepo.Set(ctx, "session:"+user.Id, string(data), 24*time.Hour)
+	return s.redisRepo.Set(ctx, fmt.Sprintf("session:%d", user.Id), string(data), 24*time.Hour)
 }
 
 /*
