@@ -55,4 +55,5 @@ const (
 	ServiceUnavailableMessage = "Service is available between 06:00 and 23:00"
 	EmailAlreadyExistMessage  = "Email already exist"
 	InvalidCredentialMessage  = "Invalid email or password"
+	GenericErrorMessage = "Generic error"
 )
