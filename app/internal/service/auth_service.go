@@ -24,7 +24,7 @@ type AuthService interface {
 type authService struct {
 	//config   *config.AppConfig
 	userRepo     repository.UserRepository
-	redisRepo    repository.UserRepository
+	redisRepo    repository.RedisRepository
 	jwtSecret    string
 	jwtExpiresIn time.Duration
 	loc          *time.Location
@@ -32,7 +32,7 @@ type authService struct {
 
 func NewAuthService(
 	userRepo repository.UserRepository,
-	redisRepo repository.UserRepository,
+	redisRepo repository.RedisRepository,
 	jwtSecret string,
 	jwtExpiresIn time.Duration,
 	loc *time.Location,
@@ -46,7 +46,7 @@ func NewAuthService(
 	}
 }
 
-// register create a new user (ref. core-purchase-statement)
+// register create a new user
 func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) (model.AppResponse, error) {
 	now := time.Now()
 
@@ -182,7 +182,7 @@ func (s *authService) storeSession(ctx context.Context, user *model.User) error 
 	if err != nil {
 		return err
 	}
-	return s.userRepo.Set(ctx, "session:"+user.Id, string(data), 24*time.Hour)
+	return s.redisRepo.Set(ctx, "session:"+user.Id, string(data), 24*time.Hour)
 }
 
 /*
