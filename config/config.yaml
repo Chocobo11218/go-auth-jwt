@@ -10,9 +10,13 @@ server:
   address: ":4001"
   time-zone: "Asia/Bangkok"
 
-
 db:
-  name: xxx
+  name: "auth"
+  sslmode: "true"
+  max_open_conns: 32
+  max_idle_conns: 64
+  conn_max_lifetime_hour: 5m
+  
 
 jwt:
   expire: 24h

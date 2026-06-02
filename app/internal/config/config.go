@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 type AppConfig struct {
 	Log    Log          `mapstructure:"log" validate:"required"`
 	App    App          `mapstructure:"app" validate:"required"`
@@ -25,7 +27,11 @@ type Server struct {
 }
 
 type DBConfig struct {
-	Name string `mapstructure:"name"`
+	Name                      string        `mapstructure:"name"`
+	SSLMode                   string        `mapstructure:"sslmode" validate:"required"`
+	MaxOpenConnection         int           `mapstructure:"max_open_conns" validate:"required"`
+	MaxIdleConnection         int           `mapstructure:"max_idle_conns" validate:"required"`
+	ConnectionMaxLifetimeHour time.Duration `mapstructure:"conn_max_lifetime_hour" validate:"required"`
 }
 
 type JWTConfig struct {
@@ -33,6 +39,9 @@ type JWTConfig struct {
 }
 
 type SecretConfig struct {
+	DBHost     string `envconfig:"DB_HOST" required:"true"`
+	DBPort     string `envconfig:"DB_PORT" required:"true"`
+	DBUser     string `envconfig:"DB_USER" required:"true"`
 	DBPassword string `envconfig:"DB_PASSWORD" required:"true"`
 	JWTSecret  string `envconfig:"JWT_SECRET" required:"true"`
 }

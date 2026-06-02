@@ -13,6 +13,8 @@ import (
 	//"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/configurer"
+	mysql_database "github.com/Chocobo11218/go-auth-jwt/app/pkg/database"
+
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/logger"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
@@ -30,6 +32,7 @@ func main() {
 
 	// load secret env
 	configurer.LoadSecret(&conf.Secret)
+	fmt.Printf("%+v", conf)
 
 	// init logger
 	logger.Initialize()
@@ -43,6 +46,36 @@ func main() {
 	if err := config.SetTimeZone(conf.Server.TimeZone); err != nil {
 		logger.Error(ctx, "fail set timezone", zap.Error(err))
 	}
+	
+	// database
+	db, err := mysql_database.Connect(&mysql_database.MysqlConfig{
+		Name:                conf.DB.Name,
+		SSLMode:             conf.DB.SSLMode,
+		MaxOpenConns:        &conf.DB.MaxOpenConnection,
+		MaxIdleConns:        &conf.DB.MaxIdleConnection,
+		ConnMaxLifetimeHour: conf.DB.ConnectionMaxLifetimeHour,
+		MysqlHost:           conf.Secret.DBHost,
+		MysqlPort:           conf.Secret.DBPort,
+		MysqlUser:           conf.Secret.DBUser,
+		MysqlPassword:       conf.Secret.DBPassword,
+		Loc:                 time.Local,
+	})
+
+	if err != nil {
+		logger.Error(ctx, "fail connect database", zap.Error(err))
+		os.Exit(1)
+	}
+	defer func() {
+		if db == nil {
+			return
+		}
+		if sqlDB, err := db.DB(); err == nil {
+			_ = sqlDB.Close()
+		}
+	}()
+
+	fmt.Println(db)
+
 
 	// init repository
 	//userRepo := repository.NewUserRepository(db)
