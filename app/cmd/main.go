@@ -10,7 +10,8 @@ import (
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/config"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/handler/httphandler"
-	//"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
+	"github.com/Chocobo11218/go-auth-jwt/app/internal/model"
+	"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/configurer"
 	mysql_database "github.com/Chocobo11218/go-auth-jwt/app/pkg/database"
@@ -46,7 +47,7 @@ func main() {
 	if err := config.SetTimeZone(conf.Server.TimeZone); err != nil {
 		logger.Error(ctx, "fail set timezone", zap.Error(err))
 	}
-	
+
 	// database
 	db, err := mysql_database.Connect(&mysql_database.MysqlConfig{
 		Name:                conf.DB.Name,
@@ -60,6 +61,7 @@ func main() {
 		MysqlPassword:       conf.Secret.DBPassword,
 		Loc:                 time.Local,
 	})
+	fmt.Println("time: ", time.Now())
 
 	if err != nil {
 		logger.Error(ctx, "fail connect database", zap.Error(err))
@@ -74,15 +76,26 @@ func main() {
 		}
 	}()
 
-	fmt.Println(db)
+	fmt.Println("db:", db)
 
+	db.AutoMigrate(&model.User{})
 
 	// init repository
-	//userRepo := repository.NewUserRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
 	// init service
-	//authService := service.NewAuthService(userRepo)
-	authService := service.NewAuthServiceMock()
+	jwtExpire, err := time.ParseDuration(conf.JWT.Expire)
+	if err != nil {
+		logger.Error(ctx, "fail parse jwt expire duration", zap.Error(err))
+		os.Exit(1)
+	}
+
+	authService := service.NewAuthService(
+		userRepo,
+		conf.Secret.JWTSecret,
+		jwtExpire,
+	) 
+	//authService := service.NewAuthServiceMock()
 
 	// init handler
 	authHandler := httphandler.NewAuthHandler(authService)
