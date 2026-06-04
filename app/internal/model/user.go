@@ -1,19 +1,15 @@
 package model
 
-import "time"
+import "gorm.io/gorm"
 
 // db entity
 type User struct {
-	Id           uint64     `gorm:"column:id;primaryKey;autoIncrement"`
-	Email        string     `gorm:"column:email"`
-	PasswordHash string     `gorm:"column:password_hash"`
-	PasswordSalt string     `gorm:"column:password_salt"`
-	FirstName    string     `gorm:"column:first_name"`
-	LastName     string     `gorm:"column:last_name"`
-	PhoneNumber  int64      `gorm:"column:phone_number"`
-	CreatedAt    time.Time  `gorm:"column:created_at"`
-	UpdatedAt    time.Time  `gorm:"column:updated_at"`
-	DeletedAt    *time.Time `gorm:"column:deleted_at"`
+	gorm.Model         // ID, Created_at, Updated_at, Deleted_at
+	Email       string `gorm:"unique"`
+	Password    string
+	FirstName   string
+	LastName    string
+	PhoneNumber int64
 }
 
 // request

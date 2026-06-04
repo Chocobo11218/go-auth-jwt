@@ -2,11 +2,10 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"encoding/json"
+
+	//"encoding/json"
 	"errors"
-	"fmt"
+	//"fmt"
 	"strconv"
 	"time"
 
@@ -16,84 +15,75 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// AuthService is the port (interface) that the HTTP handler depends on.
+// Any adapter (HTTP, gRPC, CLI) talks to this, never directly to the repository.
 type AuthService interface {
-	Register(ctx context.Context, req *model.RegisterRequest) (model.AppResponse, error)
-	Login(ctx context.Context, req *model.LoginRequest) (model.AppResponse, error)
+	Register(ctx context.Context, req *model.RegisterRequest) (*model.AppResponse, error)
+	Login(ctx context.Context, req *model.LoginRequest) (*model.AppResponse, error)
 }
 
 type authService struct {
-	//config   *config.AppConfig
 	userRepo     repository.UserRepository
-	redisRepo    repository.RedisRepository
-	jwtSecret    string
-	jwtExpiresIn time.Duration
-	loc          *time.Location
+	jwtSecretKey string
+	jwtTTL       time.Duration
 }
 
+// constructor
 func NewAuthService(
 	userRepo repository.UserRepository,
-	redisRepo repository.RedisRepository,
-	jwtSecret string,
-	jwtExpiresIn time.Duration,
-	loc *time.Location,
+	jwtSecretKey string,
+	jwtTTL time.Duration,
 ) AuthService {
 	return &authService{
 		userRepo:     userRepo,
-		redisRepo:    redisRepo,
-		jwtSecret:    jwtSecret,
-		jwtExpiresIn: jwtExpiresIn,
-		loc:          loc,
+		jwtSecretKey: jwtSecretKey,
+		jwtTTL:       jwtTTL,
 	}
 }
 
-// register create a new user
-func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) (model.AppResponse, error) {
-	now := time.Now()
+// creates a new user after validating that the email is not already taken
+func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) (*model.AppResponse, error) {
 
+	// check service hours
 	if err := s.checkServiceHours(); err != nil {
-		return model.AppResponse{}, errors.New(model.ServiceUnavailableMessage) //err
+		return nil, errors.New(model.ServiceUnavailableMessage)
 	}
 
+	// check for duplicate email
 	exists, err := s.userRepo.ExistByEmail(ctx, req.Email)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 	if exists {
-		return model.AppResponse{}, errors.New(model.EmailAlreadyExistMessage)
+		return nil, errors.New(model.EmailAlreadyExistMessage)
 	}
 
-	salt, err := generateSalt()
+	// hash the password before storing
+	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 
-	hash, err := hashPassword(req.Password, salt)
+	// convert phone number string -> int64 (validated as numeric by the handler)
+	phoneNumber, err := strconv.ParseInt(req.PhoneNumber, 10, 64) // Atoi(req.PhoneNumber)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
-	}
-
-	phoneNumber, err := strconv.Atoi(req.PhoneNumber) //ParseInt(req.PhoneNumber, 10, 64)
-	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 
 	saveUserDB := &model.User{
-		Email:        req.Email,
-		PasswordHash: hash,
-		PasswordSalt: salt,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		PhoneNumber:  int64(phoneNumber),
-		CreatedAt:    now,
-		UpdatedAt:    now,
+		Email:       req.Email,
+		Password:    string(hashPassword),
+		FirstName:   req.FirstName,
+		LastName:    req.LastName,
+		PhoneNumber: phoneNumber,
 	}
 
-	err = s.userRepo.Create(ctx, saveUserDB)
+	err = s.userRepo.CreateUser(ctx, saveUserDB)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 
-	registerResponse := model.AppResponse{
+	registerResponse := &model.AppResponse{
 		Code:    model.StatusSuccess,
 		Message: "Register Success",
 	}
@@ -101,34 +91,42 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 	return registerResponse, nil
 }
 
-// Login gives a registered user an access token if the credentials are valid
-func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (model.AppResponse, error) {
+// gives a registered user an access token if the credentials are valid
+func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*model.AppResponse, error) {
 
+	// check service hours
 	if err := s.checkServiceHours(); err != nil {
-		return model.AppResponse{}, errors.New(model.ServiceUnavailableMessage)
+		return nil, errors.New(model.ServiceUnavailableMessage)
 	}
 
+	// find user email
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.InvalidCredentialMessage)
+		return nil, errors.New(model.InvalidCredentialMessage)
+	}
+	if user == nil {
+		return nil, errors.New(model.InvalidCredentialMessage)
 	}
 
-	err = verifyPassword(req.Password, user.PasswordSalt, user.PasswordHash)
+	// compare user input password against stored hashed password
+	err = bcrypt.CompareHashAndPassword(
+		[]byte(user.Password),
+		[]byte(req.Password),
+	)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.InvalidCredentialMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 
-	token, err := s.generateJWT(user)
+	// pass = return jwt
+	// create jwt token 
+	token, err := s.generateJWT(user.ID)
 	if err != nil {
-		return model.AppResponse{}, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.GenericErrorMessage)
 	}
 
-	// store session
-	// _ = s.storeSession(ctx, user)
-
-	response := model.AppResponse{
+	response := &model.AppResponse{
 		Code:    model.StatusSuccess,
-		Message: "Success",
+		Message: "Login Successful",
 		Data:    model.TokenData{AccessToken: token},
 	}
 	return response, nil
@@ -143,78 +141,15 @@ func (s *authService) checkServiceHours() error {
 	return nil
 }
 
-// login
-// PW_SALT_BYTES = 16 -> 32-character string
-func generateSalt() (string, error) {
-	b := make([]byte, 16)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
-}
+func (s *authService) generateJWT(userID uint) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = userID
+	claims["exp"] = time.Now().Add(s.jwtTTL).Unix()
 
-func hashPassword(password, salt string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(salt+password), bcrypt.DefaultCost)
+	t, err := token.SignedString([]byte(s.jwtSecretKey))
 	if err != nil {
 		return "", err
 	}
-	return string(hash), nil
+	return t, nil
 }
-
-// verifyPassword
-func verifyPassword(password, salt, hash string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(salt+password))
-}
-
-// checkCredential -> repository.GetUserByEmail
-
-type jwtClaims struct {
-	jwt.RegisteredClaims
-	UserID uint64 `json:"user_id"`
-	Email  string `json:"email"`
-}
-
-func (s *authService) generateJWT(user *model.User) (string, error) {
-	// prepare custome claims
-	claims := &jwtClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.jwtExpiresIn)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-		UserID: user.Id,
-		Email:  user.Email,
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-
-	tokenString, err := token.SignedString(s.jwtSecret)
-	if err != nil {
-		return "", err
-	}
-	return tokenString, nil
-}
-
-// store session
-type sessionPayload struct {
-	UserID uint64 `json:"user_id"`
-	Email  string `json:"email"`
-}
-
-// storeSession stores user session in Redis under key "session:{user_id}" with 24h TTL
-func (s *authService) storeSession(ctx context.Context, user *model.User) error {
-	data, err := json.Marshal(sessionPayload{ // convert the struct into a JSON byte slice
-		UserID: user.Id,
-		Email:  user.Email,
-	})
-	if err != nil {
-		return err
-	}
-	return s.redisRepo.Set(ctx, fmt.Sprintf("session:%d", user.Id), string(data), 24*time.Hour)
-}
-
-/*
-{
-  "user_id": 1,
-  "email": "customer@example.com",
-  "exp": 1234567890
-}
-*/

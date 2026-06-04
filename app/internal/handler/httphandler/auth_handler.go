@@ -8,7 +8,6 @@ import (
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
 	"github.com/go-playground/validator/v10"
 
-	//"github.com/Chocobo11218/go-auth-jwt/app/pkg/logger"
 	"github.com/labstack/echo/v4"
 )
 
@@ -18,13 +17,11 @@ type AuthHandler interface {
 }
 
 type authHandler struct {
-	//config      *config.AppConfig
-	//loc         *time.Location
 	authService service.AuthService
 	validate    *validator.Validate
 }
 
-func NewAuthHandler(authService service.AuthService) AuthHandler { // config *config.AppConfig, loc *time.Location,
+func NewAuthHandler(authService service.AuthService) AuthHandler {
 	return &authHandler{
 		authService: authService,
 		validate: validator.New(),
