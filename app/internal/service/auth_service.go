@@ -2,10 +2,7 @@ package service
 
 import (
 	"context"
-
-	//"encoding/json"
 	"errors"
-	//"fmt"
 	"strconv"
 	"time"
 
@@ -114,7 +111,7 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 		[]byte(req.Password),
 	)
 	if err != nil {
-		return nil, errors.New(model.GenericErrorMessage)
+		return nil, errors.New(model.InvalidCredentialMessage)
 	}
 
 	// pass = return jwt
@@ -132,7 +129,6 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 	return response, nil
 }
 
-// register
 func (s *authService) checkServiceHours() error {
 	hour := time.Now().Hour()
 	if hour < 6 || hour >= 23 {
