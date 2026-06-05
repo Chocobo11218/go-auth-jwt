@@ -13,7 +13,7 @@ type User struct {
 	Password    string         `gorm:"size:255;not null"`
 	FirstName   string         `gorm:"size:100;not null"`
 	LastName    string         `gorm:"size:100;not null"`
-	PhoneNumber string         `gorm:"size:20;not null"`
+	PhoneNumber string         `gorm:"unique;size:20;not null"`
 	Created_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
 	Updated_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
 	Deleted_at  gorm.DeletedAt `gorm:"index"`
@@ -25,7 +25,7 @@ type RegisterRequest struct {
 	Password    string `json:"password" validate:"required,min=8"`
 	FirstName   string `json:"first_name" validate:"required"`
 	LastName    string `json:"last_name" validate:"required"`
-	PhoneNumber string `json:"phone_number" validate:"required,numeric"`
+	PhoneNumber string `json:"phone_number" validate:"required,numeric,min=7,max=15"`
 }
 
 type LoginRequest struct {

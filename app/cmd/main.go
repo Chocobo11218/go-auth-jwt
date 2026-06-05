@@ -32,7 +32,7 @@ func main() {
 
 	// load secret env
 	configurer.LoadSecret(&conf.Secret)
-	fmt.Printf("%+v", conf)
+	//fmt.Printf("%+v", conf)
 
 	// init logger
 	logger.Initialize()
@@ -60,7 +60,6 @@ func main() {
 		MysqlPassword:       conf.Secret.DBPassword,
 		Loc:                 time.Local,
 	})
-	fmt.Println("time: ", time.Now())
 
 	if err != nil {
 		logger.Error(ctx, "fail connect database", zap.Error(err))
@@ -75,15 +74,13 @@ func main() {
 		}
 	}()
 
-	fmt.Println("db:", db)
-
 	// init repository
 	userRepo := repository.NewUserRepository(db)
 
 	// init service
 	jwtExpire, err := time.ParseDuration(conf.JWT.Expire)
 	if err != nil {
-		logger.Error(ctx, "fail parse jwt expire duration", zap.Error(err))
+		logger.Error(ctx, "Main: Fail parse jwt expire duration", zap.Error(err))
 		os.Exit(1)
 	}
 
