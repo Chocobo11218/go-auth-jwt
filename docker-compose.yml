@@ -1,0 +1,122 @@
+services:
+
+  mysql:
+    container_name: mysql
+    image: mysql:8
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD:
+      MYSQL_USER:
+      MYSQL_PASSWORD:
+      MYSQL_DATABASE:
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - my-network
+    restart: unless-stopped
+
+
+  # redis:
+  #   container_name: redis
+  #   image: redis:7
+  #   ports:
+  #     - "6379:6379"
+  #   volumes:
+  #     - redis_data:/data
+  #   networks:
+  #     - my-network
+  #   restart: unless-stopped
+
+  # elasticsearch:
+  #   container_name: elasticsearch
+  #   image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+  #   environment:
+  #     discovery.type: single-node
+  #     xpack.security.enabled: "false"
+  #     xpack.security.transport.ssl.enabled: "false"
+  #   ports:
+  #     - "9200:9200"
+  #   volumes:
+  #     - elasticsearch_data:/usr/share/elasticsearch/data
+  #   networks:
+  #     - my-network
+  #   restart: unless-stopped
+
+  # kibana:
+  #   container_name: kibana
+  #   depends_on:
+  #     - elasticsearch
+  #   image: docker.elastic.co/kibana/kibana:8.12.0
+  #   ports:
+  #     - "5601:5601"
+  #   environment:
+  #     ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+  #   volumes:
+  #     - kibana_data:/usr/share/kibana/data
+  #   networks:
+  #     - my-network
+  #   restart: unless-stopped
+
+  # kafka0:
+  #   container_name: kafka0
+  #   hostname: kafka0
+  #   image: apache/kafka:4.1.2
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_NODE_ID: 1
+  #     KAFKA_PROCESS_ROLES: broker,controller
+  #     KAFKA_LISTENERS: PLAINTEXT://kafka0:29092,CONTROLLER://kafka0:29093,EXTERNAL://0.0.0.0:9092
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka0:29092,EXTERNAL://localhost:9092
+  #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+  #     KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+  #     KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka0:29093
+  #     KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  #   volumes:
+  #     - kafka_data:/var/lib/kafka/data
+  #   networks:
+  #     - my-network
+  #   restart: unless-stopped
+
+  # kafka-ui:
+  #   container_name: kafka-ui
+  #   depends_on:
+  #     - kafka0
+  #   image: provectuslabs/kafka-ui:latest
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     DYNAMIC_CONFIG_ENABLED: "true"
+  #     KAFKA_CLUSTERS_0_NAME: "local"
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka0:29092"
+  #   networks:
+  #     - my-network
+  #   restart: unless-stopped
+
+
+# ----------------------------
+# NETWORK
+# ----------------------------
+networks:
+  my-network:
+    external: true
+
+
+# ----------------------------
+# VOLUMES
+# ----------------------------
+volumes:
+  mysql_data:
+    external: true
+  # redis_data:
+  #   external: true
+  # elasticsearch_data:
+  #   external: true
+  # kibana_data:
+  #   external: true
+  # kafka_data:
+  #   external: true
