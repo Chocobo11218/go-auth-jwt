@@ -37,43 +37,39 @@ func (h *authHandler) Register(c echo.Context) error {
 
 	logger.Info(ctx, "AuthHandler - Register called")
 
-	req, err := buildRegisterRequest(c, h.validate)
+	req, err := h.buildRegisterRequest(c)
 	if err != nil {
 		logger.Error(
 			ctx, 
-			"AuthHandler - buildRegisterRequest error", 
+			"Register Handler: buildRegisterRequest error", 
 			zap.Error(err),
 		)
-		
-		return c.JSON(http.StatusBadRequest, model.AppResponse{
-			Code:    model.StatusBadRequest,
-			Message: model.GenericErrorMessage,  // modify
-		})
+		return c.NoContent(http.StatusBadRequest)
 	}
 
 	response, err := h.authService.Register(ctx, req)
 	if err != nil {
 
 		if err.Error() == model.EmailAlreadyExistMessage {
-			logger.Error(ctx, "AuthHandler - Register email already exist", zap.Error(err))
+			logger.Error(ctx, "Register Handler: Email already exist", zap.Error(err))
 			return c.JSON(http.StatusOK, model.AppResponse{
 				Code:    model.StatusEmailAlreadyExist,
 				Message: model.EmailAlreadyExistMessage,
 			})
 		}
 		if err.Error() == model.ServiceUnavailableMessage {
-			logger.Error(ctx, "AuthHandler - Service hour restricted", zap.Error(err))
+			logger.Error(ctx, "Register Handler: Service hour restricted", zap.Error(err))
 			return c.JSON(http.StatusOK, model.AppResponse{
 				Code:    model.StatusServiceUnavailable,
 				Message: model.ServiceUnavailableMessage,
 			})
 		}
+		logger.Error(ctx, "Register Handler: Generic error", zap.Error(err))
 		return c.JSON(http.StatusOK, model.AppResponse{
 			Code: model.StatusGenericError,
 			Message: model.GenericErrorMessage,
 		})
 	}
-	//logger.Info(ctx, "AuthHandler - Register Success", zap.String("email", req.Email))
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -83,57 +79,51 @@ func (h *authHandler) Login(c echo.Context) error {
 
 	logger.Info(ctx, "AuthHandler - Login called")
 
-	req, err := buildLoginRequest(c, h.validate) 
+	req, err := h.buildLoginRequest(c) 
 	if err != nil {
-		logger.Error(ctx, "AuthHandler - buildLoginRequest error", zap.Error(err))
-		return c.JSON(http.StatusBadRequest, model.AppResponse{
-			Code: model.StatusBadRequest,
-			Message: model.GenericErrorMessage, 
-		})
+		logger.Error(ctx, "Login Handler: buildLoginRequest error", zap.Error(err))
+		return c.NoContent(http.StatusBadRequest)
 	}
 
 	response, err := h.authService.Login(ctx, req)
 	if err != nil {
-		if err.Error() == model.InvalidCredentialMessage { // errors.Is(err, model.)
-			logger.Error(ctx, "AuthHandler - Login invalid credential", zap.Error(err))
-			return c.JSON(http.StatusOK, model.AppResponse{
-				Code: model.StatusInvalidCredential,
-				Message: model.InvalidCredentialMessage,
-			})
+		if err.Error() == model.InvalidCredentialMessage {
+			logger.Error(ctx, "Login Handler: Invalid credential", zap.Error(err))
+			return c.NoContent(http.StatusUnauthorized)
 		}
 		if err.Error() == model.ServiceUnavailableMessage {
-			logger.Error(ctx, "AuthHandler - Service hours restricted", zap.Error(err))
+			logger.Error(ctx, "Login Handler: Service hours restricted", zap.Error(err))
 			return c.JSON(http.StatusOK, model.AppResponse{
 				Code: model.StatusServiceUnavailable,
 				Message: model.ServiceUnavailableMessage,
 			})
 		}
+		logger.Error(ctx, "Login Handler: Generic error", zap.Error(err))
 		return c.JSON(http.StatusOK, model.AppResponse{
 			Code: model.StatusGenericError,
 			Message: model.GenericErrorMessage,
 		})
 	}
-	//logger.Info(ctx, "AuthHandler - Login Success", zap.String("email", req.Email))
 	return c.JSON(http.StatusOK, response)
 }
 
-func buildRegisterRequest(c echo.Context, validate *validator.Validate) (*model.RegisterRequest, error) {
+func (h *authHandler) buildRegisterRequest(c echo.Context) (*model.RegisterRequest, error) {
 
-	req := new(model.RegisterRequest) //var req model.RegisterRequest
+	req := new(model.RegisterRequest)
 
-	if err := c.Bind(req); err != nil { // &req
+	if err := c.Bind(req); err != nil {
 		return nil, errors.New("Invalid request body")
 	}
 
 	//validate := validator.New()
-	err := validate.Struct(req)
+	err := h.validate.Struct(req)
 	if err != nil {
 		return nil, err
 	}
 	return req, nil
 }
 
-func buildLoginRequest(c echo.Context, validate *validator.Validate) (*model.LoginRequest, error) {
+func (h *authHandler) buildLoginRequest(c echo.Context) (*model.LoginRequest, error) {
 	//var req model.RegisterRequest
 	req := new(model.LoginRequest)
 
@@ -141,7 +131,7 @@ func buildLoginRequest(c echo.Context, validate *validator.Validate) (*model.Log
 		return nil, errors.New("Invalid request body") 
 	}
 
-	err := validate.Struct(req)
+	err := h.validate.Struct(req)
 	if err != nil {
 		return nil, err
 	}

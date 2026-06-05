@@ -11,8 +11,8 @@ type User struct {
 	ID          uint           `gorm:"primaryKey;autoIncrement;not null"`
 	Email       string         `gorm:"unique;size:255;not null"`
 	Password    string         `gorm:"size:255;not null"`
-	FirstName   string         `gorm:"size:100;not null"`
-	LastName    string         `gorm:"size:100;not null"`
+	FirstName   string         `gorm:"size:255;not null"`
+	LastName    string         `gorm:"size:255;not null"`
 	PhoneNumber string         `gorm:"unique;size:20;not null"`
 	Created_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
 	Updated_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
@@ -52,11 +52,12 @@ const (
 	StatusInvalidCredential  = 4002
 	StatusGenericError       = 5000
 	StatusServiceUnavailable = 5001
-	StatusBadRequest         = 400
 
 	// message
 	ServiceUnavailableMessage = "Service is available between 06:00 and 23:00"
 	EmailAlreadyExistMessage  = "Email already exist"
 	InvalidCredentialMessage  = "Invalid email or password"
 	GenericErrorMessage       = "Generic error"
+	RegisterSuccessMessage    = "Register Success"
+	LoginSuccessMessage       = "Login Success"
 )

@@ -32,19 +32,19 @@ func main() {
 
 	// load secret env
 	configurer.LoadSecret(&conf.Secret)
-	//fmt.Printf("%+v", conf)
 
 	// init logger
 	logger.Initialize()
+	defer logger.Sync()
 
 	// validate config
 	validate := validator.New()
 	if err := validate.Struct(conf); err != nil {
-		logger.Error(ctx, "fail validate loaded config", zap.Error(err))
+		logger.Fatal(ctx, "fail validate loaded config", zap.Error(err))
 	}
 
 	if err := config.SetTimeZone(conf.Server.TimeZone); err != nil {
-		logger.Error(ctx, "fail set timezone", zap.Error(err))
+		logger.Fatal(ctx, "fail set timezone", zap.Error(err))
 	}
 
 	// database
@@ -53,7 +53,7 @@ func main() {
 		SSLMode:             conf.DB.SSLMode,
 		MaxOpenConns:        &conf.DB.MaxOpenConnection,
 		MaxIdleConns:        &conf.DB.MaxIdleConnection,
-		ConnMaxLifetimeHour: conf.DB.ConnectionMaxLifetimeHour,
+		ConnMaxLifetimeHour: conf.DB.ConnectionMaxLifetime,
 		MysqlHost:           conf.Secret.DBHost,
 		MysqlPort:           conf.Secret.DBPort,
 		MysqlUser:           conf.Secret.DBUser,
@@ -62,15 +62,16 @@ func main() {
 	})
 
 	if err != nil {
-		logger.Error(ctx, "fail connect database", zap.Error(err))
-		os.Exit(1)
+		logger.Fatal(ctx, "fail connect database", zap.Error(err))
 	}
 	defer func() {
-		if db == nil {
+		sqlDB, err := db.DB()
+		if err != nil {
+			logger.Warn(ctx, "fail get sql.DB", zap.Error(err))
 			return
 		}
-		if sqlDB, err := db.DB(); err == nil {
-			_ = sqlDB.Close()
+		if err := sqlDB.Close(); err != nil {
+			logger.Warn(ctx, "fail close database", zap.Error(err))
 		}
 	}()
 
@@ -78,18 +79,10 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 
 	// init service
-	jwtExpire, err := time.ParseDuration(conf.JWT.Expire)
-	if err != nil {
-		logger.Error(ctx, "Main: Fail parse jwt expire duration", zap.Error(err))
-		os.Exit(1)
-	}
-
 	authService := service.NewAuthService(
 		userRepo,
-		conf.Secret.JWTSecret,
-		jwtExpire,
+		conf,
 	)
-	//authService := service.NewAuthServiceMock()
 
 	// init handler
 	authHandler := httphandler.NewAuthHandler(authService)

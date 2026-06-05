@@ -42,7 +42,6 @@ func (s *HttpServer) InitRoutes() {
 	api := rootCtx.Group("/api")
 
 	v1 := api.Group("/v1")
-	//_ = v1
 
 	v1.POST("/register", s.authHandler.Register)
 

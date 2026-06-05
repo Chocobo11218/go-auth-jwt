@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/model"
-	//"github.com/go-sql-driver/mysql"
 	"gorm.io/gorm"
 )
 

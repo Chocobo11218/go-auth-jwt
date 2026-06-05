@@ -3,13 +3,11 @@ package mysql_database
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 
 	"os"
 	"time"
@@ -76,19 +74,7 @@ func Connect(config *MysqlConfig) (*gorm.DB, error) {
 	newLogrus.SetFormatter(&logrus.JSONFormatter{})
 	newLogrus.SetOutput(os.Stdout)
 
-	// can be removed later
-	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
-		logger.Config{
-			SlowThreshold: time.Second, // Slow SQL threshold
-			LogLevel:      logger.Info, // Log level
-			Colorful:      true,        // Disable color
-		},
-	)
-
-	gDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
-		Logger: newLogger, //
-	})
+	gDB, err := gorm.Open(mysql.Open(dsn))
 
 	if err != nil {
 		return nil, errors.Join(err, errors.New("can't initialize entity session"))

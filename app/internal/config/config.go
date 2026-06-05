@@ -31,11 +31,11 @@ type DBConfig struct {
 	SSLMode                   string        `mapstructure:"tls" validate:"required"`
 	MaxOpenConnection         int           `mapstructure:"max_open_conns" validate:"required"`
 	MaxIdleConnection         int           `mapstructure:"max_idle_conns" validate:"required"`
-	ConnectionMaxLifetimeHour time.Duration `mapstructure:"conn_max_lifetime" validate:"required"`
+	ConnectionMaxLifetime time.Duration `mapstructure:"conn_max_lifetime" validate:"required"`
 }
 
 type JWTConfig struct {
-	Expire string `mapstructure:"expire"`
+	Expire time.Duration `mapstructure:"expire"`
 }
 
 type SecretConfig struct {
