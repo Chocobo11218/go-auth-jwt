@@ -12,10 +12,10 @@ server:
 
 db:
   name: "auth"
-  sslmode: "true"
+  tls: "true"
   max_open_conns: 32
   max_idle_conns: 64
-  conn_max_lifetime_hour: 5m
+  conn_max_lifetime: 5m
   
 
 jwt:

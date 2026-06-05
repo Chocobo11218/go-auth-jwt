@@ -10,7 +10,6 @@ import (
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/config"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/handler/httphandler"
-	"github.com/Chocobo11218/go-auth-jwt/app/internal/model"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/repository"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
 	"github.com/Chocobo11218/go-auth-jwt/app/pkg/configurer"
@@ -78,8 +77,6 @@ func main() {
 
 	fmt.Println("db:", db)
 
-	db.AutoMigrate(&model.User{})
-
 	// init repository
 	userRepo := repository.NewUserRepository(db)
 
@@ -94,7 +91,7 @@ func main() {
 		userRepo,
 		conf.Secret.JWTSecret,
 		jwtExpire,
-	) 
+	)
 	//authService := service.NewAuthServiceMock()
 
 	// init handler

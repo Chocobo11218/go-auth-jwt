@@ -6,7 +6,9 @@ import (
 
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/model"
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/service"
+	"github.com/Chocobo11218/go-auth-jwt/app/pkg/logger"
 	"github.com/go-playground/validator/v10"
+	"go.uber.org/zap"
 
 	"github.com/labstack/echo/v4"
 )
@@ -33,16 +35,25 @@ func (h *authHandler) Register(c echo.Context) error {
 
 	ctx := c.Request().Context()
 
+	logger.Info(ctx, "AuthHandler - Register called")
+
 	req, err := buildRegisterRequest(c, h.validate)
 	if err != nil {
+		logger.Error(
+			ctx, 
+			"AuthHandler - buildRegisterRequest error", 
+			zap.Error(err),
+		)
+		
 		return c.JSON(http.StatusBadRequest, model.AppResponse{
 			Code:    model.StatusBadRequest,
-			Message: err.Error(),
+			Message: model.GenericErrorMessage,  // modify
 		})
 	}
 
 	response, err := h.authService.Register(ctx, req)
 	if err != nil {
+
 		if err.Error() == model.EmailAlreadyExistMessage {
 			return c.JSON(http.StatusOK, model.AppResponse{
 				Code:    model.StatusEmailAlreadyExist,
@@ -57,9 +68,11 @@ func (h *authHandler) Register(c echo.Context) error {
 		}
 		return c.JSON(http.StatusOK, model.AppResponse{
 			Code: model.StatusGenericError,
-			Message: "Generic error",
+			Message: model.GenericErrorMessage,
 		})
 	}
+
+	//logger.Info(ctx, "AuthHandler - Register Success", zap.String("email", req.Email))
 	return c.JSON(http.StatusOK, response)
 }
 
@@ -67,11 +80,20 @@ func (h *authHandler) Login(c echo.Context) error {
 	
 	ctx := c.Request().Context()
 
+	logger.Info(ctx, "AuthHandler - Login called")
+
 	req, err := buildLoginRequest(c, h.validate) 
 	if err != nil {
+
+		logger.Error(
+			ctx, 
+			"AuthHandler - buildLoginRequest error", 
+			zap.Error(err),
+		)
+
 		return c.JSON(http.StatusBadRequest, model.AppResponse{
 			Code: model.StatusBadRequest,
-			Message: err.Error(),
+			Message: model.GenericErrorMessage, 
 		})
 	}
 
@@ -80,7 +102,7 @@ func (h *authHandler) Login(c echo.Context) error {
 		if err.Error() == model.InvalidCredentialMessage {
 			return c.JSON(http.StatusOK, model.AppResponse{
 				Code: model.StatusInvalidCredential,
-				Message: model.InvalidCredentialMessage,
+				Message: model.InvalidCredentialMessage, // change
 			})
 		}
 		if err.Error() == model.ServiceUnavailableMessage {
@@ -94,6 +116,7 @@ func (h *authHandler) Login(c echo.Context) error {
 			Message: "Generic error",
 		})
 	}
+	//logger.Info(ctx, "AuthHandler - Login Success", zap.String("email", req.Email))
 	return c.JSON(http.StatusOK, response)
 }
 

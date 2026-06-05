@@ -1,15 +1,22 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 // db entity
 type User struct {
-	gorm.Model         // ID, Created_at, Updated_at, Deleted_at
-	Email       string `gorm:"unique"`
-	Password    string
-	FirstName   string
-	LastName    string
-	PhoneNumber int64
+	ID          uint           `gorm:"primaryKey;autoIncrement;not null"`
+	Email       string         `gorm:"unique;size:255;not null"`
+	Password    string         `gorm:"size:255;not null"`
+	FirstName   string         `gorm:"size:100;not null"`
+	LastName    string         `gorm:"size:100;not null"`
+	PhoneNumber string         `gorm:"size:20;not null"`
+	Created_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	Updated_at  time.Time      `gorm:"not null;default:CURRENT_TIMESTAMP"`
+	Deleted_at  gorm.DeletedAt `gorm:"index"`
 }
 
 // request

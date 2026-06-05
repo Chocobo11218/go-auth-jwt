@@ -28,10 +28,10 @@ type Server struct {
 
 type DBConfig struct {
 	Name                      string        `mapstructure:"name"`
-	SSLMode                   string        `mapstructure:"sslmode" validate:"required"`
+	SSLMode                   string        `mapstructure:"tls" validate:"required"`
 	MaxOpenConnection         int           `mapstructure:"max_open_conns" validate:"required"`
 	MaxIdleConnection         int           `mapstructure:"max_idle_conns" validate:"required"`
-	ConnectionMaxLifetimeHour time.Duration `mapstructure:"conn_max_lifetime_hour" validate:"required"`
+	ConnectionMaxLifetimeHour time.Duration `mapstructure:"conn_max_lifetime" validate:"required"`
 }
 
 type JWTConfig struct {

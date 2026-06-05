@@ -10,7 +10,7 @@ import (
 
 type UserRepository interface {
 	ExistByEmail(ctx context.Context, email string) (bool, error)
-	Create(ctx context.Context, req *model.User) error
+	CreateUser(ctx context.Context, req *model.User) error
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 }
 
@@ -24,41 +24,37 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	}
 }
 
-// 
 func (r *userRepository) ExistByEmail(ctx context.Context, email string) (bool, error) {
-
-	var count int64
+	var exists int
 	err := r.db.WithContext(ctx).
 		Model(&model.User{}).
-		Where("email = ? AND deleted_at IS NULL", email).
-		Count(&count).Error
-
-	if err != nil {
-		return false, err
-	}
-	
-	return count > 0, nil
+		Select("1").
+		Where("email = ?", email). // AND deleted_at IS NULL
+		Limit(1).
+		Scan(&exists).Error
+	// SELECT 1 FROM users WHERE ... LIMIT 1
+	return exists == 1, err
 }
 
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
-	
+
 	var user model.User
 	err := r.db.WithContext(ctx).
-		Where("email = ? AND deleted_at IS NULL", email).
+		Where("email = ?", email). // AND deleted_at IS NULL
 		First(&user).Error
-
+	// SELECT * FROM `users` WHERE (email = 'test@example.com' AND deleted_at IS NULL) AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
+	
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound){
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
 		}
 		return nil, err
 	}
-	
+
 	return &user, nil
 }
 
 // inserts a new user into the database
-func (r *userRepository) Create(ctx context.Context, req *model.User) error {
-	//req.Id = uuid.New().String()
-	return r.db.WithContext(ctx).Create(req).Error
+func (r *userRepository) CreateUser(ctx context.Context, user *model.User) error {
+	return r.db.WithContext(ctx).Create(user).Error
 }

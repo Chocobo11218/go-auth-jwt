@@ -3,13 +3,14 @@ package httphandler
 import (
 	"github.com/Chocobo11218/go-auth-jwt/app/internal/config"
 	"github.com/labstack/echo/v4"
+	//"github.com/labstack/echo/v4/middleware"
 )
 
 type HttpServer struct {
 	config             *config.AppConfig
 	server             *echo.Echo
 	healthCheckHandler IHealthCheckHandler
-	authHandler AuthHandler
+	authHandler        AuthHandler
 }
 
 func NewHttpServer(
@@ -44,6 +45,9 @@ func (s *HttpServer) InitRoutes() {
 	_ = v1
 
 	v1.POST("/register", s.authHandler.Register)
+
+	// rate-limit login: 5 requests/min per IP
+	//loginLimiter := middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5))
 	v1.POST("/login", s.authHandler.Login)
 }
 
@@ -54,5 +58,3 @@ func (s *HttpServer) Start(address string) error {
 func (s *HttpServer) Server() *echo.Echo {
 	return s.server
 }
-
-
