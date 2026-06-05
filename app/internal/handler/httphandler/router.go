@@ -44,9 +44,6 @@ func (s *HttpServer) InitRoutes() {
 	v1 := api.Group("/v1")
 
 	v1.POST("/register", s.authHandler.Register)
-
-	// rate-limit login: 5 requests/min per IP
-	//loginLimiter := middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5))
 	v1.POST("/login", s.authHandler.Login)
 }
 

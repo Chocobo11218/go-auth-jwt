@@ -67,7 +67,7 @@ func (s *authService) Register(ctx context.Context, req *model.RegisterRequest) 
 	// hash the password before storing
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		logger.Info(ctx, "Register Service: Failed to hash password",
+		logger.Error(ctx, "Register Service: Failed to hash password",
 			zap.Error(err),
 		)
 		return nil, err
@@ -112,14 +112,14 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 	// find user email
 	user, err := s.userRepo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		logger.Info(ctx, "Login Service: User not found",
+		logger.Error(ctx, "Login Service: User look up failed",
 			zap.Error(err),
 		)
 		return nil, err
 	}
 	// no user found
 	if user == nil {
-		logger.Info(ctx, "Login Service: User look up failed")
+		logger.Error(ctx, "Login Service: User not found")
 		return nil, errors.New(model.InvalidCredentialMessage)
 	}
 
@@ -129,7 +129,7 @@ func (s *authService) Login(ctx context.Context, req *model.LoginRequest) (*mode
 		[]byte(req.Password),
 	)
 	if err != nil {
-		logger.Info(ctx, "Login Service: Invalid password",
+		logger.Error(ctx, "Login Service: Invalid password",
 			zap.Error(err),
 		)
 		return nil, errors.New(model.InvalidCredentialMessage)

@@ -32,7 +32,7 @@ func (r *userRepository) ExistByEmail(ctx context.Context, email string) (bool, 
 		Where("email = ? AND deleted_at IS NULL", email).
 		Limit(1).
 		Scan(&exists).Error
-	// SELECT 1 FROM users WHERE ... LIMIT 1
+
 	return exists == 1, err
 }
 
@@ -42,8 +42,7 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	err := r.db.WithContext(ctx).
 		Where("email = ? AND deleted_at IS NULL", email).
 		First(&user).Error
-	// SELECT * FROM `users` WHERE (email = 'test@example.com' AND deleted_at IS NULL) AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT 1
-	
+
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -57,14 +56,4 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 // inserts a new user into the database
 func (r *userRepository) CreateUser(ctx context.Context, user *model.User) error {
 	return r.db.WithContext(ctx).Create(user).Error
-
-	// err := r.db.WithContext(ctx).Create(user).Error
-	// if err != nil {
-	// 	var mysqlErr *mysql.MySQLError
-	// 	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-	// 		return errors.New(model.EmailAlreadyExistMessage)
-	// 	}
-	// 	return err
-	// }
-	// return nil
 }

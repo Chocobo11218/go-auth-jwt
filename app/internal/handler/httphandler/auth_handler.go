@@ -46,7 +46,7 @@ func (h *authHandler) Register(c echo.Context) error {
 		)
 		return c.NoContent(http.StatusBadRequest)
 	}
-
+	
 	response, err := h.authService.Register(ctx, req)
 	if err != nil {
 
@@ -110,12 +110,9 @@ func (h *authHandler) Login(c echo.Context) error {
 func (h *authHandler) buildRegisterRequest(c echo.Context) (*model.RegisterRequest, error) {
 
 	req := new(model.RegisterRequest)
-
 	if err := c.Bind(req); err != nil {
 		return nil, errors.New("Invalid request body")
 	}
-
-	//validate := validator.New()
 	err := h.validate.Struct(req)
 	if err != nil {
 		return nil, err
