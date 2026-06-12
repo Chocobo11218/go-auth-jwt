@@ -44,6 +44,12 @@ type TokenData struct {
 	AccessToken string `json:"access_token"`
 }
 
+type ProfileResponse struct {
+	FirstName string `json:"firstname"`
+	LastName  string `json:"lastname"`
+	Email     string `json:"email"`
+}
+
 // error
 const (
 	// code
@@ -60,4 +66,6 @@ const (
 	GenericErrorMessage       = "Generic error"
 	RegisterSuccessMessage    = "Register Success"
 	LoginSuccessMessage       = "Login Success"
+	GetMeSuccessMessage       = "success"
+	UserNotFoundMessage       = "User not found"
 )

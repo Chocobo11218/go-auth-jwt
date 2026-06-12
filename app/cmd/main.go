@@ -83,9 +83,11 @@ func main() {
 		userRepo,
 		conf,
 	)
+	userService := service.NewUserService(userRepo)
 
 	// init handler
 	authHandler := httphandler.NewAuthHandler(authService)
+	userHandler := httphandler.NewUserHandler(userService)
 
 	// init http server
 	httpServer := httphandler.NewHttpServer(
@@ -93,6 +95,7 @@ func main() {
 		echo.New(),
 		httphandler.NewHealthCheckHandler(),
 		authHandler,
+		userHandler,
 	)
 
 	go func() {

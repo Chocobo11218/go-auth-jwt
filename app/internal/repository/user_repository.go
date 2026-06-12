@@ -12,6 +12,7 @@ type UserRepository interface {
 	ExistByEmail(ctx context.Context, email string) (bool, error)
 	CreateUser(ctx context.Context, req *model.User) error
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
+	GetUserByID(ctx context.Context, id uint) (*model.User, error)
 }
 
 type userRepository struct {
@@ -54,17 +55,22 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	return &user, nil
 }
 
+func (r *userRepository) GetUserByID(ctx context.Context, id uint) (*model.User, error) {
+	var user model.User
+	err := r.db.WithContext(ctx).
+		Where("id = ? AND deleted_at IS NULL", id).
+		First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
 // inserts a new user into the database
 func (r *userRepository) CreateUser(ctx context.Context, user *model.User) error {
+	
 	return r.db.WithContext(ctx).Create(user).Error
-
-	// err := r.db.WithContext(ctx).Create(user).Error
-	// if err != nil {
-	// 	var mysqlErr *mysql.MySQLError
-	// 	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1062 {
-	// 		return errors.New(model.EmailAlreadyExistMessage)
-	// 	}
-	// 	return err
-	// }
-	// return nil
 }
