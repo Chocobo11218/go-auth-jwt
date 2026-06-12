@@ -47,6 +47,8 @@ func main() {
 		logger.Fatal(ctx, "fail set timezone", zap.Error(err))
 	}
 
+	fmt.Printf("%+v", conf)
+
 	// database
 	db, err := mysql_database.Connect(&mysql_database.MysqlConfig{
 		Name:                conf.DB.Name,

@@ -1,16 +1,15 @@
-CREATE TABLE users (
-    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    email varchar(255) NOT NULL,
-    password_hash varchar(255) NOT NULL,
-    password_salt varchar(255) NOT NULL,
-    first_name varchar(100) NOT NULL,
-    last_name varchar(100) NOT NULL,
-    phone_number varchar(20) NOT NULL,
-    created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    deleted_at datetime NULL,
-
-    PRIMARY KEY (id)
+CREATE TABLE `users` (
+  `id`           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `email`        VARCHAR(255)    NOT NULL,
+  `password`     VARCHAR(255)    NOT NULL,
+  `first_name`   VARCHAR(255)    NOT NULL,
+  `last_name`    VARCHAR(255)    NOT NULL,
+  `phone_number` VARCHAR(20)     NOT NULL,
+  `created_at`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`   DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `deleted_at`   DATETIME        NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_users_email` (`email`),
+  UNIQUE KEY `uni_users_phone_number` (`phone_number`),
+  INDEX `idx_users_deleted_at` (`deleted_at`)
 );
-
-CREATE UNIQUE INDEX `email` ON `users` (`email`);
